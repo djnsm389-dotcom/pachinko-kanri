@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -372,6 +373,16 @@ function App() {
 
   function updateArea(field, val) { setAreas(function(prev) { return prev.map(function(a, i) { return i === areaIdx ? Object.assign({}, a, { [field]: val }) : a; }); }); }
   function updateStore(si, field, val) { updateArea('stores', area.stores.map(function(s, idx) { return idx === si ? Object.assign({}, s, { [field]: val }) : s; })); }
+  function updateStoreInArea(ai, si, field, val) {
+    setAreas(function(prev) {
+      return prev.map(function(a, i) {
+        if (i !== ai) return a;
+        return Object.assign({}, a, { stores: a.stores.map(function(s, idx) {
+          return idx === si ? Object.assign({}, s, { [field]: val }) : s;
+        }) });
+      });
+    });
+  }
   function addStore() { updateArea('stores', area.stores.concat([{ name: "競合店", machines: "200", isGroup: false }])); }
   function removeStore(si) { updateArea('stores', area.stores.filter(function(_, idx) { return idx !== si; })); }
   function addArea() {
@@ -455,6 +466,20 @@ function App() {
                       n(store.hopedUnits) > 0 ? h('div', { style: { fontSize: 12, color: 'var(--gold)', marginTop: 6 } },
                         '希望台数：', h('strong', { style: { fontFamily: 'Rajdhani, sans-serif', fontSize: 18 } }, n(store.hopedUnits) + '台')
                       ) : null,
+                      (function() {
+                        var origIdx = ar.stores.findIndex(function(s) { return s.name === store.name && s.isGroup; });
+                        return h('div', { style: { marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 } },
+                          h('span', { style: { fontSize: 11, color: 'var(--text-dim)' } }, '希望台数'),
+                          h('input', {
+                            type: 'text', inputMode: 'numeric', className: 'hoped-input',
+                            value: store.hopedUnits || '', placeholder: '未定',
+                            onChange: function(e) { updateStoreInArea(ai, origIdx, 'hopedUnits', e.target.value); },
+                            onFocus: function(e) { e.target.select(); }
+                          }),
+                          h('span', { style: { fontSize: 11, color: 'var(--text-dim)' } }, '台'),
+                          n(store.hopedUnits) > 0 ? h('span', { className: 'hoped-confirmed' }, '✓反映') : null
+                        );
+                      })(),
                       h('div', { className: 'group-card-suf' },
                         h('div', null,
                           h('div', { style: { fontSize: 10, color: 'rgba(146,64,14,0.5)', marginBottom: 4 } }, 'エリア充足率'),
